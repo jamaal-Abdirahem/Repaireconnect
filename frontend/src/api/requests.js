@@ -55,6 +55,9 @@ export async function createRequest(data) {
       clientName: data.clientName,
       phone: data.phone,
       location: data.location,
+      vehicleType: data.vehicleType || "OTHER",
+      latitude: data.latitude ?? null,
+      longitude: data.longitude ?? null,
       problem: data.problem,
       status: "REPORTED",
       clientId: user?.id || "u001",
@@ -85,9 +88,38 @@ export async function assignRequest(requestId, technicianId) {
 export async function markArrived(requestId) {
   if (MOCK_MODE) {
     await delay();
-    return updateRequest(requestId, { status: "IN_PROGRESS" });
+    return updateRequest(requestId, { status: "ARRIVED" });
   }
   const body = await apiFetch(`/requests/${requestId}/arrived`, { method: "POST" });
+  return body.data;
+}
+
+export async function submitEstimate(requestId, report, budget) {
+  if (MOCK_MODE) {
+    await delay();
+    return updateRequest(requestId, { status: "ESTIMATED", problemReport: report, budget });
+  }
+  const body = await apiFetch(`/requests/${requestId}/estimate`, {
+    method: "POST", body: JSON.stringify({ report, budget }),
+  });
+  return body.data;
+}
+
+export async function approveEstimate(requestId) {
+  if (MOCK_MODE) {
+    await delay();
+    return updateRequest(requestId, { status: "APPROVED" });
+  }
+  const body = await apiFetch(`/requests/${requestId}/approve-estimate`, { method: "POST" });
+  return body.data;
+}
+
+export async function startWork(requestId) {
+  if (MOCK_MODE) {
+    await delay();
+    return updateRequest(requestId, { status: "IN_PROGRESS" });
+  }
+  const body = await apiFetch(`/requests/${requestId}/start-work`, { method: "POST" });
   return body.data;
 }
 

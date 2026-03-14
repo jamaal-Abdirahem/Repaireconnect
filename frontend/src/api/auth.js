@@ -1,7 +1,6 @@
 /**
  * api/auth.js
  * ─────────────────────────────────────────────────────────────
- * MOCK_MODE = true  → uses mock users, no network call
  * MOCK_MODE = false → calls real backend POST /auth/login
  * ─────────────────────────────────────────────────────────────
  */
@@ -20,15 +19,19 @@ export async function login(credentials) {
     return { token: "mock_token", user };
   }
 
+  // Real backend: { success: true, token, user: { id, name, role } }
   const body = await apiFetch("/auth/login", {
     method: "POST",
     body: JSON.stringify(credentials),
   });
+
+  // Persist session so apiFetch can attach the Bearer token on future requests,
+  // and so hydrateAuth can restore the session after a page refresh.
   if (body.token) {
     localStorage.setItem("rc_token", body.token);
     localStorage.setItem("rc_user", JSON.stringify(body.user));
   }
-  return body;
+  return body; // { token, user }
 }
 
 export async function register(data) {
@@ -36,6 +39,7 @@ export async function register(data) {
     await delay();
     return { success: true, message: "User created successfully" };
   }
+  // Real backend: { success: true, message: "User created successfully" }
   return apiFetch("/auth/register", {
     method: "POST",
     body: JSON.stringify(data),

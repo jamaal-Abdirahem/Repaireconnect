@@ -10,10 +10,10 @@
  * ─────────────────────────────────────────────────────────────
  */
 
-export const BASE_URL = "http://localhost:5000/api";
+export const BASE_URL = import.meta.env.VITE_API_URL || "https://service-dispatch-backend-2.onrender.com/api";
 
 // ── Set to false when backend is ready ───────────────────────
-export const MOCK_MODE = true;
+export const MOCK_MODE = false;
 // ─────────────────────────────────────────────────────────────
 
 export class ApiError extends Error {
@@ -40,6 +40,18 @@ export async function apiFetch(path, options = {}) {
     body = await res.json();
   } catch {
     throw new ApiError("Server returned non-JSON response", res.status);
+  }
+
+  // Auto-logout on expired / invalid token — clears localStorage and Redux state
+  if (res.status === 401) {
+    localStorage.removeItem("rc_token");
+    localStorage.removeItem("rc_user");
+    // Dynamically import to avoid circular dependency at module load time
+    import("../store/store.js").then(({ default: store }) => {
+      import("../store/slices/authSlice.js").then(({ logoutUser }) => {
+        store.dispatch(logoutUser());
+      });
+    });
   }
 
   if (!res.ok) {

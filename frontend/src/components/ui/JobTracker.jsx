@@ -15,9 +15,9 @@ function Dot({ active, done, label, index }) {
         style={{ position: "relative", zIndex: 2 }}
         className={cls(
           "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all duration-300",
-          done   ? "bg-emerald-500 border-emerald-500 text-white" :
-          active ? "bg-slate-900 border-slate-900 text-white shadow-md" :
-                   "bg-white border-gray-200 text-gray-400"
+          done   ? "bg-brand-500 border-brand-500 text-surface-50" :
+          active ? "bg-surface-950 border-surface-950 text-surface-50 shadow-md" :
+                   "bg-surface-50 border-surface-200 text-surface-500"
         )}
       >
         {done ? <Check size={12} strokeWidth={3} /> : index + 1}
@@ -25,9 +25,9 @@ function Dot({ active, done, label, index }) {
       <span
         className={cls(
           "text-xs text-center mt-1.5 leading-tight px-0.5",
-          active ? "text-slate-900 font-semibold" :
-          done   ? "text-emerald-600 font-medium"  :
-                   "text-gray-400"
+          active ? "text-surface-950 font-display font-bold track-tighter font-semibold" :
+          done   ? "text-brand-500 font-medium"  :
+                   "text-surface-500"
         )}
         style={{ maxWidth: 72 }}
       >
@@ -44,12 +44,12 @@ export function JobTracker({ status }) {
   return (
     <div style={{ position: "relative", paddingBottom: 4 }}>
       {/* grey track */}
-      <div style={{ position: "absolute", top: 16, left: 16, right: 16, height: 2, background: "#e5e7eb", zIndex: 0 }} />
+      <div style={{ position: "absolute", top: 16, left: 16, right: 16, height: 2, background: "#0D0D0C", zIndex: 0 }} />
       {/* emerald fill */}
       <div style={{
         position: "absolute", top: 16, left: 16,
         width: `calc((100% - 32px) * ${pct} / 100)`,
-        height: 2, background: "#10b981", zIndex: 1,
+        height: 2, background: "#FF5500", zIndex: 1,
         transition: "width 0.5s ease",
       }} />
       {/* dots */}

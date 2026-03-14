@@ -1,8 +1,21 @@
-/** portals/client/components/NewRequestForm.jsx */
 import { useState } from "react";
-import { Car, MapPin, Wrench, FileText, AlertTriangle, Phone, User } from "lucide-react";
+import {
+  Car,
+  MapPin,
+  Wrench,
+  FileText,
+  AlertTriangle,
+  Phone,
+  User,
+} from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { newRequestSchema } from "../../../validations/serviceSchemas.js";
 import { InputField } from "../../../components/ui/InputField.jsx";
 import { createRequest } from "../../../api/requests.js";
+import { LocationPickerMap } from "../../../components/ui/LocationPickerMap.jsx";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "../../../components/ui/card.jsx";
+import { Button } from "../../../components/ui/button.jsx";
 
 const PROBLEM_TYPES = [
   "Battery dead / won't start",
@@ -17,34 +30,48 @@ const PROBLEM_TYPES = [
   "Other",
 ];
 
-export function NewRequestForm({ onSuccess, onCancel, defaultName = "", defaultPhone = "" }) {
-  const [form, setForm] = useState({
-    clientName: defaultName,
-    phone: defaultPhone,
-    location: "",
-    vehicle: "",
-    problem: PROBLEM_TYPES[0],
-    extraNotes: "",
-  });
-  const [error, setError]     = useState("");
+export function NewRequestForm({
+  onSuccess,
+  onCancel,
+  defaultName = "",
+  defaultPhone = "",
+}) {
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const ch = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
+  const [coords, setCoords] = useState(null);
 
-  const submit = async () => {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(newRequestSchema),
+    defaultValues: {
+      clientName: defaultName,
+      phone: defaultPhone,
+      location: "",
+      vehicleType: "CAR",
+      vehicle: "",
+      problem: PROBLEM_TYPES[0],
+      extraNotes: "",
+    },
+  });
+
+  const onSubmit = async (data) => {
     setError("");
-    if (!form.phone.trim() || !form.location.trim() || !form.vehicle.trim()) {
-      setError("Phone, location, and vehicle are required."); return;
-    }
-    const problemText = form.extraNotes.trim()
-      ? `${form.problem} — Vehicle: ${form.vehicle}. Notes: ${form.extraNotes}`
-      : `${form.problem} — Vehicle: ${form.vehicle}`;
+    const problemText = data.extraNotes?.trim()
+      ? `${data.problem} — Vehicle: ${data.vehicle}. Notes: ${data.extraNotes}`
+      : `${data.problem} — Vehicle: ${data.vehicle}`;
 
     setLoading(true);
     try {
       const req = await createRequest({
-        clientName: form.clientName.trim(),
-        phone: form.phone.trim(),
-        location: form.location.trim(),
+        clientName: data.clientName.trim(),
+        phone: data.phone.trim(),
+        location: data.location.trim(),
+        vehicleType: data.vehicleType,
+        latitude: coords ? coords.lat : null,
+        longitude: coords ? coords.lng : null,
         problem: problemText,
       });
       onSuccess(req);
@@ -56,64 +83,201 @@ export function NewRequestForm({ onSuccess, onCancel, defaultName = "", defaultP
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
-      <h3 className="font-bold text-slate-900 text-lg">Request Roadside Assistance</h3>
+    <Card className="relative overflow-hidden  border-surface-200 shadow-sm">
+      <div className="absolute top-0 right-0 w-64 h-64 bg-brand-50 rounded-full blur-3xl pointer-events-none -z-10" />
 
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-3 py-2.5 flex gap-2 items-start">
-          <AlertTriangle size={13} className="shrink-0 mt-0.5" /> {error}
-        </div>
-      )}
-
-      <div className="grid gap-4">
-        <InputField label="Your Name"            name="clientName"  value={form.clientName}  onChange={ch} placeholder="Jane Smith"               icon={User}   />
-        <InputField label="Contact Phone"        name="phone"       value={form.phone}       onChange={ch} placeholder="+1 (555) 000-0000"         icon={Phone}  type="tel" />
-        <InputField label="Current Location"     name="location"    value={form.location}    onChange={ch} placeholder="123 Main St, near BP Station" icon={MapPin} />
-        <InputField label="Vehicle (Year+Make+Model)" name="vehicle" value={form.vehicle}   onChange={ch} placeholder="Toyota Camry 2021"          icon={Car}    />
-
-        <div>
-          <label className="text-xs font-semibold text-gray-500 block mb-1.5">Problem Type</label>
-          <div className="relative">
-            <Wrench size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-            <select
-              name="problem"
-              value={form.problem}
-              onChange={ch}
-              className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white outline-none focus:ring-2 focus:ring-slate-800 transition"
-            >
-              {PROBLEM_TYPES.map(p => <option key={p}>{p}</option>)}
-            </select>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-3 text-2xl tracking-tight">
+          <div className="w-10 h-10 bg-brand-500/10 rounded-none flex items-center justify-center shrink-0">
+            <Car size={20} className="text-brand-600" />
           </div>
-        </div>
+          Request Service
+        </CardTitle>
+        <CardDescription>
+          Fill out the form below to request a technician to your location.
+        </CardDescription>
+      </CardHeader>
 
-        <div>
-          <label className="text-xs font-semibold text-gray-500 block mb-1.5">Additional Notes <span className="font-normal">(optional)</span></label>
-          <div className="relative">
-            <FileText size={14} className="absolute left-3 top-3 text-gray-400 pointer-events-none" />
-            <textarea
-              name="extraNotes"
-              value={form.extraNotes}
-              onChange={ch}
-              rows={3}
-              placeholder="Any extra details that will help the technician…"
-              className="w-full pl-9 pr-3.5 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-slate-800 transition resize-none"
-            />
+      <CardContent>
+        {error && (
+          <div className="bg-brand-500/10 border border-brand-500/30 text-brand-600 text-sm rounded-md px-4 py-3 flex gap-2.5 items-start font-medium shadow-inner mb-6">
+            <AlertTriangle size={16} className="shrink-0 mt-0.5 text-brand-600" /> {error}
           </div>
-        </div>
-      </div>
+        )}
 
-      <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800">
-        ✓ We'll assign a technician within <strong>20–30 minutes</strong>.
-      </div>
+        <form id="new-request-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6 relative z-10">
+          <div className="grid gap-4">
+            <div>
+              <InputField
+                {...register("clientName")}
+                label="Your Name"
+                placeholder="Jane Smith"
+                icon={User}
+                className={errors.clientName ? "border-brand-500 focus-visible:ring-brand-500" : ""}
+              />
+              {errors.clientName && (
+                <p className="text-brand-600 text-xs mt-1">
+                  {errors.clientName.message}
+                </p>
+              )}
+            </div>
 
-      <div className="grid grid-cols-2 gap-3 pt-1">
-        <button onClick={onCancel} className="py-3 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
+            <div>
+              <InputField
+                {...register("phone")}
+                label="Contact Phone"
+                placeholder="+1 (555) 000-0000"
+                icon={Phone}
+                type="tel"
+                className={errors.phone ? "border-brand-500 focus-visible:ring-brand-500" : ""}
+              />
+              {errors.phone && (
+                <p className="text-brand-600 text-xs mt-1">
+                  {errors.phone.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <InputField
+                {...register("location")}
+                label="Current Location"
+                placeholder="e.g. KM4, near Sahafi Hotel"
+                icon={MapPin}
+                className={errors.location ? "border-brand-500 focus-visible:ring-brand-500" : ""}
+                hint="Describe nearby roads or landmarks in Mogadishu. Then drop a pin on the map."
+              />
+              {errors.location && (
+                <p className="text-brand-600 text-xs mt-1">
+                  {errors.location.message}
+                </p>
+              )}
+              <div className="rounded-md overflow-hidden border border-surface-200">
+                <LocationPickerMap value={coords} onChange={setCoords} />
+              </div>
+              {coords && (
+                <p className="text-[11px] text-surface-400">
+                  Picked location: {coords.lat.toFixed(5)},{" "}
+                  {coords.lng.toFixed(5)}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <InputField
+                {...register("vehicle")}
+                label="Vehicle (Year+Make+Model)"
+                placeholder="Toyota Camry 2021"
+                icon={Car}
+                className={errors.vehicle ? "border-brand-500 focus-visible:ring-brand-500" : ""}
+              />
+              {errors.vehicle && (
+                <p className="text-brand-600 text-xs mt-1">
+                  {errors.vehicle.message}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="text-sm font-semibold text-surface-900 block mb-2">
+                Vehicle Type
+              </label>
+              <div className="relative group">
+                <Car
+                  size={16}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-surface-400 pointer-events-none group-focus-within:text-brand-500 transition-colors"
+                />
+                <select
+                  {...register("vehicleType")}
+                  className="flex h-10 w-full rounded-md border border-surface-200 bg-surface-50 px-3 py-2 text-sm shadow-sm ring-offset-surface-50 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-surface-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pl-10 cursor-pointer appearance-none"
+                >
+                  <option value="CAR">Car</option>
+                  <option value="MOTORCYCLE">Motorcycle</option>
+                  <option value="BAJAJ">Bajaj / Tuk-tuk</option>
+                  <option value="LORRY">Lorry / Truck</option>
+                  <option value="BUS">Bus</option>
+                  <option value="OTHER">Other</option>
+                </select>
+              </div>
+              {errors.vehicleType && (
+                <p className="text-brand-600 text-xs mt-1 font-medium px-1">
+                  {errors.vehicleType.message}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="text-sm font-semibold text-surface-900 block mb-2">
+                Problem Type
+              </label>
+              <div className="relative group">
+                <Wrench
+                  size={16}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-surface-400 pointer-events-none group-focus-within:text-brand-500 transition-colors"
+                />
+                <select
+                  {...register("problem")}
+                  className="flex h-10 w-full rounded-md border border-surface-200 bg-surface-50 px-3 py-2 text-sm shadow-sm ring-offset-surface-50 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-surface-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pl-10 cursor-pointer appearance-none"
+                >
+                  {PROBLEM_TYPES.map((p) => (
+                    <option key={p}>{p}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-semibold text-surface-900 block mb-2">
+                Additional Notes <span className="font-medium normal-case text-surface-400 font-normal">(optional)</span>
+              </label>
+              <div className="relative group">
+                <FileText
+                  size={16}
+                  className="absolute left-3.5 top-3.5 text-surface-400 pointer-events-none group-focus-within:text-brand-500 transition-colors"
+                />
+                <textarea
+                  {...register("extraNotes")}
+                  rows={3}
+                  placeholder="Any extra details that will help the technician…"
+                  className="flex min-h-[80px] w-full rounded-md border border-surface-200 bg-surface-50 px-3 py-2 text-sm shadow-sm ring-offset-surface-50 placeholder:text-surface-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pl-10 resize-none"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-brand-50 border border-brand-200/50 rounded-md px-5 py-4 text-sm font-medium text-brand-800 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center shrink-0">
+               <span className="text-brand-600 text-lg">⚡</span>
+            </div>
+            <p>We'll assign a technician within <strong className="font-bold text-brand-900">20–30 minutes</strong>.</p>
+          </div>
+        </form>
+      </CardContent>
+
+      <CardFooter className="grid grid-cols-2 gap-4 border-t border-surface-100 pt-6">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          className="w-full h-12 text-sm font-bold"
+        >
           Cancel
-        </button>
-        <button onClick={submit} disabled={loading} className="py-3 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 transition-colors disabled:opacity-60">
-          {loading ? "Submitting…" : "Submit Request"}
-        </button>
-      </div>
-    </div>
+        </Button>
+        <Button
+          type="submit"
+          form="new-request-form"
+          disabled={loading}
+          className="w-full h-12 text-sm font-bold"
+        >
+          {loading ? (
+            <span className="flex items-center gap-2">
+              <div className="w-4 h-4 border-2 border-surface-50/30 border-t-surface-50 rounded-full animate-spin" /> Submitting...
+            </span>
+          ) : (
+            "Submit Request"
+          )}
+        </Button>
+      </CardFooter>
+    </Card>
   );
 }

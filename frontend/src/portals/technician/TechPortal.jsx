@@ -1,6 +1,23 @@
-/** portals/technician/TechPortal.jsx */
-import { useState, useCallback } from "react";
-import { Wrench, Phone, Mail, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
+import {
+  Wrench,
+  Phone,
+  Mail,
+  ArrowLeft,
+  Eye,
+  EyeOff,
+  Loader2,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { loginSchema } from "../../validations/authSchemas.js";
+import {
+  loginUser,
+  clearError,
+  logoutUser,
+} from "../../store/slices/authSlice.js";
 import { TechSidebar } from "./components/TechSidebar.jsx";
 import { Topbar } from "../../components/layout/Topbar.jsx";
 import { ToastContainer } from "../../components/ui/Toast.jsx";
@@ -12,158 +29,280 @@ import { TechProfile } from "./pages/TechProfile.jsx";
 import { useToast } from "../../hooks/useToast.js";
 import { getTechnicianRequests } from "../../api/requests.js";
 import { usePolling } from "../../hooks/usePolling.js";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
 
 const TITLES = {
   dashboard: "Dashboard",
-  requests:  "My Jobs",
-  job:       "Current Job",
-  history:   "Job History",
-  profile:   "My Profile",
+  requests: "My Jobs",
+  job: "Current Job",
+  history: "Job History",
+  profile: "My Profile",
 };
 
-function TechAuthGate({ onEnter, onBackToSite }) {
-  const [phone, setPhone]       = useState("");
-  const [password, setPassword] = useState("");
+function TechAuthGate() {
   const [showPass, setShowPass] = useState(false);
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState("");
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { loading, error } = useSelector((state) => state.auth);
 
-  const submit = () => {
-    setError("");
-    if (!phone.trim()) { setError("Please enter your phone number."); return; }
-    if (!password.trim()) { setError("Please enter your password."); return; }
-    setLoading(true);
-    setTimeout(() => {
-      // Use Roger Curtis as the demo technician regardless of what was typed
-      const user = {
-        id: "u003",
-        name: phone.trim(),
-        phone: phone.trim(),
-        role: "TECHNICIAN",
-      };
-      localStorage.setItem("rc_user", JSON.stringify(user));
-      onEnter(user);
-    }, 700);
+  const {
+    register: formRegister,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm({
+    resolver: zodResolver(loginSchema),
+  });
+
+  useEffect(() => {
+    dispatch(clearError());
+    reset();
+  }, [dispatch, reset]);
+
+  const onSubmit = async (data) => {
+    // For demo purposes, we will still mock a login if MOCK_MODE is true in API,
+    // but we use the Redux flow.
+    const result = await dispatch(
+      loginUser({ phone: data.phone, password: data.password }),
+    );
+    if (loginUser.fulfilled.match(result)) {
+      navigate("/technician");
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col items-center justify-center px-4">
-      <button onClick={onBackToSite} className="absolute top-5 left-5 flex items-center gap-2 text-slate-400 hover:text-white text-sm transition-colors">
-        <ArrowLeft size={15} /> Back to site
-      </button>
+    <div className="min-h-screen bg-surface-950 flex flex-col items-center justify-center px-4 relative overflow-hidden">
+      {/* Decorative gradients */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-lg h-[400px] bg-brand-500/20 blur-[100px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-1/2 h-[300px] bg-brand-500/10 blur-[100px] rounded-full pointer-events-none" />
 
-      <div className="w-full max-w-xs">
-        <div className="w-12 h-12 rounded-2xl bg-emerald-500 flex items-center justify-center mb-6 mx-auto">
-          <Wrench size={20} className="text-white" />
-        </div>
-        <h2 className="text-white font-bold text-xl text-center mb-1">Technician Portal</h2>
-        <p className="text-slate-400 text-sm text-center mb-6">Sign in to your technician account</p>
+      <Button
+        variant="ghost"
+        onClick={() => navigate("/")}
+        className="absolute top-6 left-6 flex items-center gap-2 text-surface-400 hover:text-surface-50 transition-colors z-10"
+      >
+        <ArrowLeft size={16} /> Back to site
+      </Button>
 
-        <div className="space-y-3">
-          <div className="relative">
-            <Phone size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-            <input
-              value={phone}
-              onChange={e => setPhone(e.target.value)}
-              placeholder="Phone number"
-              type="tel"
-              className="w-full bg-white/10 border border-white/20 text-white placeholder-slate-500 rounded-xl pl-10 pr-4 py-3 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition"
-            />
-          </div>
+      <Card className="w-full max-w-sm bg-[#1A1A18] border-[#2A2A28] shadow-sm z-10">
+        <CardHeader className="text-center pb-4">
+          <img
+            src="/logo.png"
+            alt="RepairConnect Logo"
+            className="w-auto h-24 mx-auto mb-6 transform hover:scale-105 transition-transform duration-300"
+          />
+          <CardTitle className="text-surface-50 font-bold text-2xl tracking-tight">
+            Technician Portal
+          </CardTitle>
+          <CardDescription className="text-surface-500 font-medium">
+            Sign in to manage your assigned jobs
+          </CardDescription>
+        </CardHeader>
 
-          <div className="relative">
-            <Mail size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-            <input
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="Password"
-              type={showPass ? "text" : "password"}
-              className="w-full bg-white/10 border border-white/20 text-white placeholder-slate-500 rounded-xl pl-10 pr-10 py-3 text-sm outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition"
-            />
-            <button onClick={() => setShowPass(v => !v)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
-              {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
-            </button>
-          </div>
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="relative">
+              <Phone
+                size={16}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-500 pointer-events-none"
+              />
+              <Input
+                {...formRegister("phone")}
+                placeholder="Phone number"
+                type="tel"
+                autoComplete="tel"
+                className={`bg-surface-950 border-[#2A2A28] text-surface-50 placeholder-surface-500 pl-11 h-12 rounded-md transition-all duration-200 ${errors.phone ? "border-brand-500/50 focus-visible:ring-brand-500/20" : "focus-visible:ring-brand-500/20"}`}
+              />
+              {errors.phone && (
+                <p className="text-brand-500 text-xs mt-1.5 px-1 font-medium">
+                  {errors.phone.message}
+                </p>
+              )}
+            </div>
 
-          {error && <p className="text-red-400 text-xs px-1">{error}</p>}
+            <div className="relative">
+              <Mail
+                size={16}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-500 pointer-events-none"
+              />
+              <Input
+                {...formRegister("password")}
+                placeholder="Password"
+                type={showPass ? "text" : "password"}
+                autoComplete="current-password"
+                className={`bg-surface-950 border-[#2A2A28] text-surface-50 placeholder-surface-500 pl-11 pr-11 h-12 rounded-md transition-all duration-200 ${errors.password ? "border-brand-500/50 focus-visible:ring-brand-500/20" : "focus-visible:ring-brand-500/20"}`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPass((v) => !v)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-surface-500 hover:text-surface-50 transition-colors"
+              >
+                {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+              {errors.password && (
+                <p className="text-brand-500 text-xs mt-1.5 px-1 font-medium">
+                  {errors.password.message}
+                </p>
+              )}
+            </div>
 
-          <button
-            onClick={submit}
-            disabled={loading}
-            className="w-full py-3.5 rounded-2xl bg-emerald-500 text-white font-bold text-sm hover:bg-emerald-400 transition-colors disabled:opacity-60 mt-1"
-          >
-            {loading ? "Signing in…" : "Sign In"}
-          </button>
-        </div>
+            {error && typeof error === "string" && (
+              <div className="bg-brand-500/10 border border-brand-500/20 rounded-md p-3 text-center">
+                <p className="text-brand-500 text-sm font-medium">{error}</p>
+              </div>
+            )}
 
-        <div className="mt-6 bg-white/5 border border-white/10 rounded-xl px-4 py-3">
-          <p className="text-slate-400 text-xs text-center">
-            Demo mode — enter any phone and password to sign in
-          </p>
-        </div>
-      </div>
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-brand-500 hover:bg-[#0D0D0C] text-surface-50 h-12 rounded-md transition-all duration-200 mt-2 shadow-sm hover:-translate-y-1 flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="animate-spin text-surface-50 h-4 w-4" />
+                  Signing in...
+                </>
+              ) : (
+                "Sign In"
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
 
-export function TechPortal({ onBackToSite }) {
-  const [user, setUser]           = useState(null);
-  const [page, setPage]           = useState("dashboard");
-  const [activeJobId, setJobId]   = useState(null);
+export function TechPortal() {
+  const { user, isAuthenticated } = useSelector((state) => state.auth);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [page, setPage] = useState("dashboard");
+  const [activeJobId, setJobId] = useState(null);
   const [sidebarOpen, setSidebar] = useState(false);
-  const [requests, setRequests]   = useState([]);
+  const [requests, setRequests] = useState([]);
   const { toasts, toast, dismiss } = useToast();
 
   const fetchRequests = useCallback(async () => {
     if (!user) return;
-    localStorage.setItem("rc_user", JSON.stringify({ ...user, id: "u003" }));
     try {
       const data = await getTechnicianRequests();
       setRequests(data);
-      const active = data.find(r => ["ASSIGNED", "IN_PROGRESS", "COMPLETED"].includes(r.status));
-      if (active && !activeJobId) setJobId(active.id);
+      const active = data.find((r) =>
+        [
+          "ASSIGNED",
+          "ARRIVED",
+          "ESTIMATED",
+          "APPROVED",
+          "IN_PROGRESS",
+          "COMPLETED",
+        ].includes(r.status),
+      );
+      if (active) setJobId((prev) => prev || active.id);
     } catch {
-      // silent
+      // silent — will surface errors when backend is real
     }
-  }, [user, activeJobId]);
+  }, [user]);
 
   usePolling(fetchRequests, 8_000, !!user);
 
-  const openJob = (id) => { setJobId(id); setPage("job"); };
-  const handleLogout = () => { setUser(null); setPage("dashboard"); setRequests([]); setJobId(null); };
+  const openJob = (id) => {
+    setJobId(id);
+    setPage("job");
+  };
+  const handleLogout = () => {
+    dispatch(logoutUser());
+    navigate("/");
+  };
 
-  if (!user) return <TechAuthGate onEnter={setUser} onBackToSite={onBackToSite} />;
+  if (!isAuthenticated || !user) return <TechAuthGate />;
+
+  if (user.role !== "TECHNICIAN" && user.role !== "ADMIN") {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center bg-surface-950 px-4">
+        <div className="w-16 h-16 rounded-none bg-brand-500/10 border border-brand-500/20 flex items-center justify-center mb-6 shadow-glow">
+          <Wrench size={24} className="text-brand-500" />
+        </div>
+        <h2 className="text-surface-50 font-bold text-2xl mb-2 tracking-tight">
+          Access Denied
+        </h2>
+        <p className="text-surface-400 text-sm mb-8 font-medium">
+          You must be a registered Technician to view this portal.
+        </p>
+        <div className="flex gap-4">
+          <button
+            onClick={handleLogout}
+            className="px-6 py-3 rounded-md bg-surface-800 text-surface-50 hover:bg-surface-700 font-semibold text-sm transition-all shadow-subtle"
+          >
+            Sign Out
+          </button>
+          <button
+            onClick={() => navigate("/")}
+            className="px-6 py-3 rounded-md bg-brand-500 text-surface-50 hover:bg-[#0D0D0C] font-semibold text-sm transition-all shadow-sm flex items-center gap-2"
+          >
+            <ArrowLeft size={16} /> Return Home
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-surface-50 overflow-hidden font-sans">
       <TechSidebar
         page={page}
         onNav={setPage}
-        onBackToSite={onBackToSite}
+        onBackToSite={() => navigate("/")}
+        onLogout={handleLogout}
         open={sidebarOpen}
         onClose={() => setSidebar(false)}
         user={user}
       />
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-surface-50">
         <Topbar
           title={TITLES[page] || "Technician"}
           user={user}
           notifs={[]}
-          onToggleSidebar={() => setSidebar(v => !v)}
+          onToggleSidebar={() => setSidebar((v) => !v)}
           onNav={setPage}
           onClearNotifs={() => {}}
           showBack={page === "job"}
           onBack={() => setPage("requests")}
-          avatarColor="emerald"
+          avatarColor="brand"
         />
         <main className="flex-1 overflow-y-auto">
           {page === "dashboard" && (
-            <TechDashboard requests={requests} onRefresh={fetchRequests} onNav={setPage} onOpenJob={openJob} onToast={toast} user={user} />
+            <TechDashboard
+              requests={requests}
+              onRefresh={fetchRequests}
+              onNav={setPage}
+              onOpenJob={openJob}
+              onToast={toast}
+              user={user}
+            />
           )}
-          {page === "requests" && <TechRequests requests={requests} onOpenJob={openJob} />}
-          {page === "job" && <TechJobPage jobId={activeJobId} onToast={toast} onDone={() => setPage("dashboard")} />}
-          {page === "history"  && <TechHistory  requests={requests} />}
-          {page === "profile"  && <TechProfile  user={user} onLogout={handleLogout} />}
+          {page === "requests" && (
+            <TechRequests requests={requests} onOpenJob={openJob} />
+          )}
+          {page === "job" && (
+            <TechJobPage
+              jobId={activeJobId}
+              onToast={toast}
+              onDone={() => setPage("dashboard")}
+            />
+          )}
+          {page === "history" && <TechHistory requests={requests} />}
+          {page === "profile" && (
+            <TechProfile user={user} onLogout={handleLogout} />
+          )}
         </main>
       </div>
       <ToastContainer toasts={toasts} onDismiss={dismiss} />

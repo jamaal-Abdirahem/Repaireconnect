@@ -1,36 +1,54 @@
-/**
- * App.jsx
- * ─────────────────────────────────────────────────────────────
- * Root router — controls which portal is shown.
- * No authentication gate. All portals are directly accessible.
- *
- * TO ADD AUTH when backend is ready:
- *   - Wrap each portal with an auth check
- *   - Read the user role from the JWT token
- *   - Redirect to correct portal based on role
- * ─────────────────────────────────────────────────────────────
- */
+import { useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 
-import { useState } from "react";
+// Redux
+import { hydrateAuth } from "./store/slices/authSlice.js";
+
+// Portals
 import { LandingPage } from "./portals/landing/LandingPage.jsx";
+import { GenericPage } from "./portals/landing/GenericPage.jsx";
 import { ClientPortal } from "./portals/client/ClientPortal.jsx";
 import { TechPortal } from "./portals/technician/TechPortal.jsx";
 import { AdminPortal } from "./portals/admin/AdminPortal.jsx";
 
 export default function App() {
-  const [view, setView] = useState("landing"); // "landing" | "client" | "technician" | "admin"
+  const dispatch = useDispatch();
+  const { loading } = useSelector((state) => state.auth);
 
-  const goBack = () => setView("landing");
+  useEffect(() => {
+    dispatch(hydrateAuth());
+  }, [dispatch]);
 
-  if (view === "client")     return <ClientPortal     onBackToSite={goBack} />;
-  if (view === "technician") return <TechPortal       onBackToSite={goBack} />;
-  if (view === "admin")      return <AdminPortal      onBackToSite={goBack} />;
+  if (loading) {
+    return <div className="h-screen flex items-center justify-center bg-surface-950 text-white">Loading App...</div>;
+  }
 
   return (
-    <LandingPage
-      onClientEnter={() => setView("client")}
-      onTechEnter={() => setView("technician")}
-      onAdminEnter={() => setView("admin")}
-    />
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        
+        {/* Marketing Pages */}
+        <Route path="/features" element={<GenericPage />} />
+        <Route path="/pricing" element={<GenericPage />} />
+        <Route path="/coverage" element={<GenericPage />} />
+        <Route path="/about" element={<GenericPage />} />
+        <Route path="/careers" element={<GenericPage />} />
+        <Route path="/contact" element={<GenericPage />} />
+        <Route path="/privacy" element={<GenericPage />} />
+        <Route path="/terms" element={<GenericPage />} />
+
+        {/* Portals handle their own AuthGates */}
+        <Route path="/client/*" element={<ClientPortal />} />
+        
+        <Route path="/technician/*" element={<TechPortal />} />
+        
+        <Route path="/admin/*" element={<AdminPortal />} />
+
+        {/* Catch-all */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }

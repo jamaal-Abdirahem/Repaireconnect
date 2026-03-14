@@ -9,10 +9,11 @@ const SIZE_MAP = {
 };
 
 const GRADIENT_MAP = {
-  amber:  "from-amber-500 to-amber-700",
-  indigo: "from-indigo-500 to-indigo-800",
-  slate:  "from-slate-600 to-slate-900",
-  emerald:"from-emerald-500 to-emerald-700",
+  amber:  "from-brand-500 to-surface-950",
+  brand:  "from-brand-500 to-surface-950",
+  indigo: "from-brand-500 to-surface-950",
+  slate:  "from-surface-700 to-surface-950",
+  emerald:"from-brand-500 to-surface-950",
 };
 
 export function Avatar({ name, photo, size = "md", color = "slate" }) {
@@ -23,7 +24,7 @@ export function Avatar({ name, photo, size = "md", color = "slate" }) {
     return <img src={photo} alt={name} className={cls(sz, "rounded-full object-cover shrink-0")} />;
   }
   return (
-    <div className={cls(sz, `rounded-full bg-gradient-to-br ${grad} text-white flex items-center justify-center font-bold shrink-0`)}>
+    <div className={cls(sz, `rounded-full bg-surface-950 ${grad} text-surface-50 flex items-center justify-center font-bold shrink-0`)}>
       {initials(name)}
     </div>
   );
