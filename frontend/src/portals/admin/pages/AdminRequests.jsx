@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Search, X, UserCheck, MapPin, Phone, Calendar } from "lucide-react";
 import { MapContainer, TileLayer, Marker, Tooltip } from "react-leaflet";
 import { StatusBadge } from "../../../components/ui/StatusBadge.jsx";
-import { Avatar } from "../../../components/ui/avatar.jsx";
+import { Avatar } from "../../../components/ui/Avatar.jsx";
 import { assignRequest } from "../../../api/requests.js";
 import { formatDate, cls, decodeLocation } from "../../../utils/helpers.js";
 import { getVehicleIcon } from "../../../components/ui/mapIcons.js";

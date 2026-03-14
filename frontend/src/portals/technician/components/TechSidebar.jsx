@@ -9,7 +9,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { SidebarShell } from "../../../components/layout/SidebarShell.jsx";
-import { Avatar } from "../../../components/ui/avatar.jsx";
+import { Avatar } from "../../../components/ui/Avatar.jsx";
 import { ScrollArea } from "../../../components/ui/scroll-area.jsx";
 import { Separator } from "../../../components/ui/separator.jsx";
 import { cls } from "../../../utils/helpers.js";
