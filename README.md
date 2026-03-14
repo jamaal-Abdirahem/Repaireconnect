@@ -1,314 +1,162 @@
-# RepairConnect — Frontend
+# RepairConnect 🚗🔧
 
-Roadside assistance platform. Three-portal frontend (Client, Technician, Admin) built with React + Vite + Tailwind CSS. Fully functional demo with mock data. Designed to plug into a real backend with a single config change.
+**Product Requirements Document (PRD) & Official Documentation**
 
----
-
-## Project Structure
-
-```
-repairconnect/
-└── frontend/
-    ├── index.html
-    ├── package.json
-    ├── vite.config.js
-    ├── tailwind.config.js
-    ├── postcss.config.js
-    └── src/
-        ├── App.jsx                         ← Root router
-        ├── main.jsx
-        ├── index.css
-        │
-        ├── api/                            ← All API calls live here
-        │   ├── client.js                   ← Base HTTP client + MOCK_MODE flag
-        │   ├── auth.js                     ← Login, register, logout
-        │   ├── requests.js                 ← Full request lifecycle
-        │   ├── users.js                    ← Users and technicians
-        │   └── mockData.js                 ← In-memory mock database (demo only)
-        │
-        ├── components/
-        │   ├── layout/
-        │   │   ├── SidebarShell.jsx        ← Reusable sidebar wrapper
-        │   │   └── Topbar.jsx              ← Top navigation bar
-        │   └── ui/
-        │       ├── Avatar.jsx              ← User avatar with initials
-        │       ├── Badge.jsx               ← Generic label badge
-        │       ├── StatusBadge.jsx         ← Request status badge
-        │       ├── InputField.jsx          ← Form input with icon
-        │       ├── JobTracker.jsx          ← Step-by-step progress tracker
-        │       └── Toast.jsx               ← Notification toasts
-        │
-        ├── hooks/
-        │   ├── usePolling.js               ← Auto-refresh on interval
-        │   └── useToast.js                 ← Toast state management
-        │
-        ├── utils/
-        │   ├── constants.js                ← Roles, statuses, tracker steps
-        │   └── helpers.js                  ← cls(), formatDate(), shortId(), initials()
-        │
-        └── portals/
-            ├── landing/
-            │   └── LandingPage.jsx         ← Public homepage
-            │
-            ├── client/
-            │   ├── ClientPortal.jsx        ← Portal root + layout
-            │   ├── components/
-            │   │   ├── ClientSidebar.jsx
-            │   │   ├── NewRequestForm.jsx   ← Submit a new request
-            │   │   └── ClientJobView.jsx    ← Track active job + approve + pay
-            │   └── pages/
-            │       ├── ClientDashboard.jsx
-            │       ├── ClientHistory.jsx
-            │       └── ClientProfile.jsx
-            │
-            ├── technician/
-            │   ├── TechPortal.jsx          ← Portal root + layout
-            │   ├── components/
-            │   │   └── TechSidebar.jsx
-            │   └── pages/
-            │       ├── TechDashboard.jsx   ← Incoming job card + active job actions
-            │       ├── TechRequests.jsx    ← All assigned jobs list
-            │       ├── TechJobPage.jsx     ← Single job: arrive → complete
-            │       ├── TechHistory.jsx
-            │       └── TechProfile.jsx
-            │
-            └── admin/
-                ├── AdminPortal.jsx         ← Portal root + layout
-                ├── components/
-                │   └── AdminSidebar.jsx
-                └── pages/
-                    ├── AdminDashboard.jsx  ← Stats overview
-                    ├── AdminRequests.jsx   ← Assign technicians to requests
-                    ├── AdminTechnicians.jsx← Toggle availability
-                    └── AdminClients.jsx    ← Client list
-```
+## 1. Executive Summary
+**RepairConnect** is a modern, on-demand roadside assistance platform designed to connect stranded drivers with certified, available mechanics in real-time. By providing a transparent, three-sided marketplace (Clients, Technicians, Administrators), RepairConnect transforms the stressful experience of a vehicle breakdown into a seamless, trackable, and safe process.
 
 ---
 
-## Getting Started
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-App runs at **http://localhost:3000**
+## 2. Problem Statement
+* **For Drivers:** Breaking down is highly stressful. Traditional roadside assistance involves long wait times, lack of transparency regarding technician arrival, and unpredictable pricing.
+* **For Mechanics:** Independent technicians struggle with dispatch efficiency, finding consistent jobs, and managing trusted payment workflows.
+* **For Operators/Admins:** Dispatching the right mechanic to the right location manually is inefficient and prone to human error.
 
 ---
 
-## Accessing the Portals
+## 3. Product Vision & Solution
+The platform functions like "Uber for Mechanics," providing real-time location mapping, direct job assignment, step-by-step progress tracking, and integrated payments. 
 
-No login is required in demo mode. All portals open directly from the landing page.
-
-| Portal | How to reach | Demo user |
-|---|---|---|
-| Client | "Get Help Now" or "Sign In" on the landing page | Anonymous |
-| Technician | Footer → "Technician login" → modal | Roger Curtis |
-| Admin | Footer → "Staff portal" | Admin User |
+The ecosystem is divided into **Three Portals**:
+1. **Client Portal:** For drivers to report issues, track their mechanic, and pay.
+2. **Technician Portal:** For mechanics to receive jobs, navigate to clients, submit estimates, and update statuses.
+3. **Admin/Staff Portal:** For platform operators to monitor all ongoing jobs, review financials, and manage users.
 
 ---
 
-## Demo Walkthrough — Full End-to-End Flow
+## 4. User Personas & Key Journeys
 
-Open three browser tabs to simulate all three roles at once.
+### Persona 1: The Stranded Driver (Client)
+* **Profile:** Needs immediate help. High stress. Using a mobile device.
+* **Key Journey:**
+  1. Signs up / Logs in via mobile.
+  2. Submits a location, vehicle details, and the apparent problem.
+  3. Tracks the assigned technician's approach on a map.
+  4. Reviews and approves the pricing estimate.
+  5. Pays securely once the job is completed.
 
-### Step 1 — Client submits a request
-1. Open the **Client portal**
-2. Click **"Request a Technician"**
-3. Fill in name, phone, location, vehicle, problem type
-4. Click **Submit Request**
-5. Dashboard now shows the request with status **REPORTED** and the live job tracker
+### Persona 2: The Service Auto-Technician (Mechanic)
+* **Profile:** On the road, needs quick information, uses the app between jobs.
+* **Key Journey:**
+  1. Toggles "Available" status to receive requests.
+  2. Accepts incoming jobs with details (location, issue).
+  3. Marks "Arrived" upon reaching the driver.
+  4. Inspects the vehicle and submits a repair estimate.
+  5. Performs the work upon approval and marks the job as "Complete."
 
-### Step 2 — Admin assigns a technician
-1. Open the **Admin portal**
-2. Go to **Requests** — the new request appears with a yellow "Reported" badge
-3. Click on the request → click **"Assign Technician"**
-4. Select a technician from the dropdown → confirm
-5. Request status updates to **ASSIGNED**
-
-### Step 3 — Technician accepts the job
-1. Open the **Technician portal** (Roger Curtis)
-2. Dashboard shows an orange **"New Job Request"** notification card
-3. Review client name, location, phone, and problem
-4. Click **Accept Job** — status updates to **IN_PROGRESS**
-5. Or click **Decline** to remove it from view
-
-### Step 4 — Technician completes the work
-1. On the technician dashboard the job card turns dark with "In Progress" state
-2. The job tracker shows current position in the flow
-3. After completing the repair, click **"Mark Job as Complete"**
-4. Confirm the dialog → status updates to **COMPLETED**
-
-### Step 5 — Client approves and pays
-1. Back in the **Client portal**, the dashboard shows **"Work completed!"**
-2. Click **"Approve Completed Work"**
-3. Enter the agreed payment amount
-4. Click **Pay** → confirm → status updates to **PAID**
-5. Both portals show the job as fully closed
+### Persona 3: Platform Administrator (Dispatcher/Operator)
+* **Profile:** Sitting at a desk, needs a macro view of platform health.
+* **Key Journey:**
+  1. Views the global map of active requests and technician locations.
+  2. Manually assigns/re-assigns jobs if the automated system needs overrides.
+  3. Reviews financial dashboards, total requests, and system analytics.
+  4. Manages the roster of registered technicians and clients.
 
 ---
 
-## Request Status Lifecycle
+## 5. Core Features & Scope
 
-```
-REPORTED → ASSIGNED → IN_PROGRESS → COMPLETED → PAID
-```
+### Global Features
+* **Role-Based Access Control (RBAC):** Secure routing based on user type.
+* **Real-Time Job Tracker:** Shared state tracking: `REPORTED` ➔ `ASSIGNED` ➔ `ARRIVED` ➔ `ESTIMATED` ➔ `APPROVED` ➔ `IN_PROGRESS` ➔ `COMPLETED` ➔ `PAID`.
+* **Responsive Design:** Mobile-first approach for clients and technicians, desktop-optimized for admins.
 
-| Status | Meaning | Who triggers it |
-|---|---|---|
-| REPORTED | Client submitted, not yet assigned | Client |
-| ASSIGNED | Technician assigned, heading to location | Admin |
-| IN_PROGRESS | Technician accepted and is on-site | Technician |
-| COMPLETED | Work finished, awaiting client approval | Technician |
-| PAID | Client approved and paid | Client |
+### Client Portal
+* **New Request Form:** Intuitive submission with problem categorization.
+* **Live Job View:** Status progress bar, technician profile, and map.
+* **History:** Historic overview of past services.
 
----
+### Technician Portal
+* **Incoming Ping:** Notification/Alert for new job assignments.
+* **Job Control Panel:** Status updater and estimate entry.
+* **Stats Dashboard:** Earnings and completed job metrics.
 
-## Mock Data
-
-All demo data lives in `src/api/mockData.js`. Edit this file to change the demo state.
-
-### Default users
-
-| Name | Role | ID |
-|---|---|---|
-| Jane Smith | CLIENT | u001 |
-| David Park | CLIENT | u002 |
-| Roger Curtis | TECHNICIAN | u003 (t001) |
-| Maria Santos | TECHNICIAN | u004 (t002) |
-| James Okafor | TECHNICIAN | u005 (t003) |
-| Admin User | ADMIN | u006 |
-
-### Default requests on startup
-
-| ID | Client | Problem | Status | Assigned to |
-|---|---|---|---|---|
-| req004 | Sara Ahmed | Battery dead — Ford Focus 2019 | ASSIGNED | Roger Curtis |
-| req003 | Jane Smith | Engine overheating — Toyota Camry 2021 | PAID | Roger Curtis |
-
-### Adding more test data
-Open `src/api/mockData.js` and add entries to the `MOCK_REQUESTS` array following the same object shape. The `technicianId` must match an `id` in `MOCK_TECHNICIANS` (e.g. `"t001"`).
+### Admin Portal
+* **Command Center:** Grid statistics for Total Requests, Active Jobs, and Available Techs.
+* **Interactive Map:** Live tracking of all nodes (clients and mechanics).
+* **Financials:** Revenue tracking, top earners, and client spending history.
+* **User Management:** Onboarding and suspending technicians.
 
 ---
 
-## Tech Stack
+## 6. Technical Architecture & Stack
 
-| Tool | Version | Purpose |
-|---|---|---|
-| React | 18.3 | UI framework |
-| Vite | 5.4 | Build tool and dev server |
-| Tailwind CSS | 3.4 | Utility-first styling |
-| Lucide React | 0.383 | Icons |
-| PostCSS + Autoprefixer | — | CSS processing |
+### Frontend Subsystem
+* **Framework:** React 18, Vite
+* **Styling:** Tailwind CSS, PostCSS
+* **UI Components:** Customized Shadcn-like components (Lucide React for icons)
+* **Mapping:** `react-leaflet` & `leaflet` for interactive maps
+* **State Management:** `@reduxjs/toolkit` and `react-redux` (Authentication & Session)
+* **Routing:** `react-router-dom`
 
-No router library is used. Navigation is handled by React state (`useState`) in each portal root and in `App.jsx`.
+### API Architecture (Mock / Ready for Production)
+* Currently driven by an internal mock backend (`src/api/mockData.js`) allowing immediate demo capability without backend dependencies.
+* The `src/api/client.js` is fully structured to swap out mock latency for real `fetch`/`axios` REST calls using a simple `MOCK_MODE` toggle.
 
 ---
 
-## Key Patterns
+## 7. Future Roadmap / v2.0 Scope
+* **Backend Integration:** Replace the mock adapter with a Node.js/Express or NextJS API connected to PostgreSQL/MongoDB.
+* **Socket Connections:** Implement WebSocket (e.g., Socket.io) for genuine real-time location mapping instead of manual/interval polling.
+* **Real Payment Gateway:** Integrate Stripe or PayPal API for actual credit card captures.
+* **Algorithmic Dispatching:** Automated closest-driver assignment using geospatial algorithms.
 
-### MOCK_MODE
-Every API function in `src/api/` checks `MOCK_MODE` before deciding whether to hit the real backend or return mock data:
+---
 
-```js
-// src/api/client.js
-export const MOCK_MODE = true; // ← change to false to use real backend
-export const BASE_URL  = "http://localhost:5000/api";
-```
-
-### usePolling
-Portals refresh their data automatically every 8 seconds using the `usePolling` hook:
-
-```js
-usePolling(fetchRequests, 8_000, enabled);
-```
-
-In mock mode this re-reads from the shared in-memory store, so changes made in one portal are visible in another after the next poll.
-
-### Toast notifications
-Every portal uses `useToast` for feedback messages:
-
-```js
-const { toasts, toast, dismiss } = useToast();
-toast("Message here", "success"); // types: success | error | info | warning
+## 8. Directory Structure
+```text
+repair-connect/
+├── frontend/
+│   ├── public/              # Static assets & branding (logo.png)
+│   ├── src/
+│   │   ├── api/             # Mock DB, REST handlers, Auth flow
+│   │   ├── components/      # Reusable UI (Cards, Badges, Modals, Topbar)
+│   │   ├── hooks/           # Custom hooks (e.g. usePolling, useToast)
+│   │   ├── portals/         # The 3 core applications
+│   │   │   ├── admin/       # Dispatch, Financials, Tech management
+│   │   │   ├── client/      # Request creation, Job live-tracking
+│   │   │   ├── landing/     # Marketing site and entry point
+│   │   │   └── technician/  # Job accept/decline, Status updates
+│   │   ├── store/           # Redux setup
+│   │   └── utils/           # Formatters, Constants (statuses)
+│   ├── index.html           # Meta & Favicon
+│   └── package.json         # Dependencies
+└── next-app/                # Reserved for backend/SSR future expansion
 ```
 
 ---
 
-## Connecting the Real Backend
+## 9. Setup & Development Guide
 
-The frontend is pre-wired to the backend API. To switch from mock to real:
+### Prerequisites
+* Node.js (v16+)
+* npm or yarn
 
-**1. Open `src/api/client.js` and change one line:**
-```js
-// Before
-export const MOCK_MODE = true;
+### Installation
+1. **Clone the repository:**
+   ```bash
+   git clone <repository-url>
+   ```
+2. **Navigate to the frontend directory:**
+   ```bash
+   cd frontend
+   ```
+3. **Install Dependencies:**
+   ```bash
+   npm install
+   ```
+4. **Run the Development Server:**
+   ```bash
+   npm run dev
+   ```
+5. **Access the application** at `http://localhost:5173`
 
-// After
-export const MOCK_MODE = false;
-```
-
-**2. Make sure `BASE_URL` points to your running backend:**
-```js
-export const BASE_URL = "http://localhost:5000/api";
-```
-
-**3. Add login forms back to each portal.** Currently each portal sets a hardcoded mock user. Replace those constants with real login flows using the functions already available in `src/api/auth.js`:
-```js
-import { login, logout, getStoredSession } from "../../api/auth.js";
-```
-
-**4. Delete `src/api/mockData.js`** — it is no longer needed.
-
-Everything else — API calls, request lifecycle, status updates, role-based filtering — is already wired correctly and will work without any other changes.
-
----
-
-## Backend API Reference
-
-All endpoints the frontend calls. Base path: `/api`
-
-### Auth
-| Method | Endpoint | Body | Description |
-|---|---|---|---|
-| POST | `/auth/register` | `{ name, phone, password, role }` | Register a new user |
-| POST | `/auth/login` | `{ phone, password }` | Login → returns `{ token, user }` |
-
-### Requests
-| Method | Endpoint | Body | Who calls it |
-|---|---|---|---|
-| GET | `/requests` | — | Client (own requests), Admin (all) |
-| POST | `/requests` | `{ clientName, phone, location, problem }` | Client |
-| GET | `/requests/technician` | — | Technician (assigned to them) |
-| GET | `/requests/:id` | — | Any authenticated user |
-| POST | `/requests/:id/assign` | `{ technicianId }` | Admin |
-| POST | `/requests/:id/arrived` | — | Technician |
-| POST | `/requests/:id/complete` | — | Technician |
-| POST | `/requests/:id/approve` | — | Client |
-| POST | `/requests/:id/pay` | `{ amount }` | Client |
-
-### Users
-| Method | Endpoint | Body | Who calls it |
-|---|---|---|---|
-| GET | `/users/me` | — | Any authenticated user |
-| GET | `/users` | — | Admin |
-| GET | `/users/technicians` | — | Admin |
-| PATCH | `/users/technicians/:id/availability` | `{ available }` | Admin |
-
-### Authentication
-All protected endpoints expect a Bearer token in the `Authorization` header:
-```
-Authorization: Bearer <jwt_token>
-```
-The token is stored in `localStorage` under the key `rc_token` and is automatically attached by `src/api/client.js`.
+### Demo Credentials (Mock Setup)
+Because the app runs a mock simulated database, you can test all sides of the marketplace:
+* **Client Login:** Choose "Sign In" from the Client Portal with Phone: `555-0001`, Password: `password` (or just create a new fictional account on the spot).
+* **Technician Login:** Navigate to Tech Portal, use Phone: `555-1001`, Password: `password`.
+* **Admin Login:** Navigate to Admin Portal via footer link (Staff Portal), use Phone: `admin`, Password: `admin`.
 
 ---
 
-## Scripts
-
-```bash
-npm run dev       # Start dev server on http://localhost:3000
-npm run build     # Production build → dist/
-npm run preview   # Preview the production build locally
-```
+*Built for drivers, designed for efficiency. Welcome to the future of roadside assistance.*
